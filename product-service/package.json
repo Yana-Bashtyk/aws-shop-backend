@@ -8,7 +8,9 @@
     "build": "tsc",
     "watch": "tsc -w",
     "test": "jest",
-    "cdk": "cdk"
+    "cdk": "cdk",
+    "cdk:deploy": "npx cdk deploy --profile yanaadmin",
+    "cdk:destroy": "npx cdk destroy --profile yanaadmin"
   },
   "devDependencies": {
     "@aws-cdk/aws-apigatewayv2-integrations-alpha": "^2.82.0-alpha.0",

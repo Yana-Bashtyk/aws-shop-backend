@@ -53,16 +53,4 @@ const createEvent = (productId: string): APIGatewayProxyEvent => ({
   resource: '',
 });
 
-const handlerWithError: Handler = async function (event) {
-  try {
-    throw new Error('Test error');
-  } catch (err) {
-    return {
-      statusCode: 500,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: err }),
-    };
-  }
-};
-
-export { event, context, createEvent, handlerWithError };
+export { event, context, createEvent };

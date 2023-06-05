@@ -12,3 +12,15 @@ The `cdk.json` file tells the CDK Toolkit how to execute your app.
 * `cdk deploy`      deploy this stack to your default AWS account/region
 * `cdk diff`        compare deployed stack with current state
 * `cdk synth`       emits the synthesized CloudFormation template
+
+## Deplyment links
+
+FE app repository: [https://github.com/Yana-Bashtyk/nodejs-aws-shop-react/](https://github.com/Yana-Bashtyk/nodejs-aws-shop-react/)
+Cloudfront public link: [https://dh512t9i782ya.cloudfront.net/](https://dh512t9i782ya.cloudfront.net/)
+
+API Gateway endpoints:
+
+* https://870nyoxs79.execute-api.eu-west-1.amazonaws.com/products
+* https://870nyoxs79.execute-api.eu-west-1.amazonaws.com/products/7567ec4b-b10c-48c5-9345-fc73c48a80aa
+
+OpenAPI Docs: https://app.swaggerhub.com/apis-docs/YANKABASHTYK16/products_service/1.0.0

@@ -10,21 +10,22 @@ export class ProductServiceStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const getProductsList = new NodejsFunction(this, 'getProductsList', {
+    const nodeJsFunctionShared = {
       runtime: lambda.Runtime.NODEJS_18_X,
       environment: {
         PRODUCT_AWS_REGION: process.env.PRODUCT_AWS_REGION!,
       },
+    }
+
+    const getProductsList = new NodejsFunction(this, 'getProductsList', {
+      ...nodeJsFunctionShared,
       entry: path.join(__dirname,'../lambda/getProductsList.ts'),
       functionName: 'getProductsList',
       handler: 'productsListHandler'
     });
 
     const getProductsById = new NodejsFunction(this, 'getProductsById', {
-      runtime: lambda.Runtime.NODEJS_18_X,
-      environment: {
-        PRODUCT_AWS_REGION: process.env.PRODUCT_AWS_REGION!,
-      },
+      ...nodeJsFunctionShared,
       entry: path.join(__dirname,'../lambda/getProductsById.ts'),
       functionName: 'getProductsById',
       handler: 'productsIdHandler'
@@ -39,11 +40,11 @@ export class ProductServiceStack extends cdk.Stack {
       }
     });
 
-    const lambdaIntegration = new HttpLambdaIntegration('productsIntegration', getProductsList);
+    const getProductsListIntegration = new HttpLambdaIntegration('productsIntegration', getProductsList);
     httpApi.addRoutes({
       path: '/products',
       methods: [apiGateway.HttpMethod.GET],
-      integration: lambdaIntegration,
+      integration: getProductsListIntegration,
     });
 
     const getProductsByIdIntegration = new HttpLambdaIntegration('productsByIdIntegration', getProductsById);

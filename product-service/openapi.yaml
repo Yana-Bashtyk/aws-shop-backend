@@ -1,0 +1,71 @@
+openapi: "3.0.1"
+info:
+  title: "Products Http Api"
+  version: "1.0.0"
+servers:
+- url: "https://870nyoxs79.execute-api.eu-west-1.amazonaws.com/{basePath}"
+  variables:
+    basePath:
+      default: ""
+paths:
+  /products:
+    get:
+      responses:
+        '200':
+            description: Success
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Product'
+  /products/{productId}:
+    get:
+      responses:
+        '200':
+            description: Success
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Product'
+        '404':
+          description: Product not found
+    parameters:
+    - name: "productId"
+      in: "path"
+      description: "Generated path parameter for productId"
+      required: true
+      schema:
+        type: "string"
+x-amazon-apigateway-cors:
+  allowMethods:
+  - "*"
+  allowHeaders:
+  - "*"
+  maxAge: -42
+  allowCredentials: false
+  allowOrigins:
+  - "*"
+x-amazon-apigateway-importexport-version: "1.0"
+components:
+  schemas:
+    Product:
+      required:
+        - id
+        - title
+        - price
+        - description
+      type: object
+      properties:
+        id:
+          type: string
+          example: '123'
+        price:
+          type: number
+          example: 23
+        description:
+          type: string
+          example: 'This is description'
+        title:
+          type: string
+          example: 'This is title'

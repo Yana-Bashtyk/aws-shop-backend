@@ -1,5 +1,5 @@
 import { Handler } from 'aws-lambda';
-import { createProduct, createProductStock, IProduct, ICreatedProduct, IStock } from '../db/utils';
+import { createProductTransaction, IProduct, ICreatedProduct, IStock } from '../db/utils';
 import { v4 as uuidv4 } from 'uuid';
 
 export const createProductHandler: Handler = async (event) => {
@@ -33,8 +33,7 @@ export const createProductHandler: Handler = async (event) => {
       const product: IProduct = { description, id, title, price };
       const stock: IStock = { product_id: id, count };
 
-    await createProduct(product, tableProduct);
-    await createProductStock(stock, tableStock);
+      await createProductTransaction(product, stock, tableProduct, tableStock);
 
       return {
         statusCode: 200,

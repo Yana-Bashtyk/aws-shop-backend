@@ -1,5 +1,5 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, ScanCommand, GetCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, ScanCommand, GetCommand, PutCommand, TransactWriteCommand } from '@aws-sdk/lib-dynamodb';
 
 const client = new DynamoDBClient({});
 const ddbDocClient = DynamoDBDocumentClient.from(client);
@@ -63,24 +63,30 @@ interface IStock {
   count: number;
 };
 
-const createProduct = async (product: IProduct, tableName: string) => {
+const createProductTransaction = async (product: IProduct, stock: IStock, productTable: string, stockTable: string) => {
   try {
-    await ddbDocClient.send(new PutCommand({ TableName: tableName,
-      Item: product
-    }));
+    await ddbDocClient.send(
+      new TransactWriteCommand({
+        TransactItems: [
+          {
+            Put: {
+              TableName: productTable,
+              Item: product,
+            },
+          },
+          {
+            Put: {
+              TableName: stockTable,
+              Item: stock,
+            },
+          },
+        ]
+      })
+    )
   } catch (err) {
-    console.error(`Error creating product in table ${tableName}:`, err);
+    console.error('Error creating product in transaction:', err);
     throw err;
   }
 };
 
-const createProductStock = async (product: IStock, tableName: string) => {
-  try {
-    await ddbDocClient.send(new PutCommand({ TableName: tableName, Item: product}));
-  } catch (err) {
-    console.error(`Error creating product in table ${tableName}:`, err);
-    throw err;
-  }
-};
-
-export { ICreatedProduct, IProduct, IStock, scanTable, joinTables, getRecord, createProduct, createProductStock };
+export { ICreatedProduct, IProduct, IStock, scanTable, joinTables, getRecord, createProductTransaction };

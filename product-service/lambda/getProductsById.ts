@@ -1,9 +1,21 @@
 import { Handler } from 'aws-lambda';
-import { products } from '../mocks/products';
+import { getRecord } from '../db/utils';
 
 export const productsIdHandler: Handler = async function(event) {
+  const tableProduct = process.env.TABLE_NAME_PRODUCT;
+  const tableStock = process.env.TABLE_NAME_STOCK;
+  if (!tableProduct || !tableStock) {
+    return {
+      statusCode: 500,
+      body: 'TABLE_NAME_PRODUCT and TABLE_NAME_STOCK environment variables are not set',
+    };
+  }
+
   try {
-    const product = products.find((el) => el.id === event.pathParameters?.productId);
+    const productItem = await getRecord(tableProduct, 'id', event.pathParameters?.productId);
+    const stockItem = await getRecord(tableStock, 'product_id', event.pathParameters?.productId);
+    const { product_id: _, ...stockItemWithoutId } = stockItem as Record<string, any>;
+    const product = { ...productItem, ...stockItemWithoutId };
 
     if (!product) {
       return {

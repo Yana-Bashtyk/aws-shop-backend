@@ -1,4 +1,5 @@
 import * as cdk from 'aws-cdk-lib';
+import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as apiGateway from '@aws-cdk/aws-apigatewayv2-alpha';
 import { HttpLambdaIntegration } from '@aws-cdk/aws-apigatewayv2-integrations-alpha';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
@@ -10,10 +11,15 @@ export class ProductServiceStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
+    const table = dynamodb.Table.fromTableName(this, 'importedProductTable', 'product_model');
+    const tableStock = dynamodb.Table.fromTableName(this, 'importedStockTable', 'stock_model');
+
     const nodeJsFunctionShared = {
       runtime: lambda.Runtime.NODEJS_18_X,
       environment: {
         PRODUCT_AWS_REGION: process.env.PRODUCT_AWS_REGION!,
+        TABLE_NAME_PRODUCT: table.tableName,
+        TABLE_NAME_STOCK: tableStock.tableName
       },
     }
 
@@ -30,6 +36,11 @@ export class ProductServiceStack extends cdk.Stack {
       functionName: 'getProductsById',
       handler: 'productsIdHandler'
     });
+
+    table.grantReadWriteData(getProductsList);
+    table.grantReadWriteData(getProductsById);
+    tableStock.grantReadWriteData(getProductsList);
+    tableStock.grantReadWriteData(getProductsById);
 
     const httpApi = new apiGateway.HttpApi(this, 'ProductsHttpApi', {
       apiName: 'Products Http Api',

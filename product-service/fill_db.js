@@ -6,7 +6,7 @@ require('dotenv').config();
 const client = new DynamoDBClient({});
 const ddbDocClient = DynamoDBDocumentClient.from(client);
 
-const tableName = process.argv[2] || process.env.DYNAMODB_TABLE_NAME;
+const tableName = process.argv[2] || process.env.TABLE_NAME_PRODUCT;
 
 const data = JSON.parse(fs.readFileSync(`./data/${tableName}.json`, 'utf8'));
 

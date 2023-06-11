@@ -2,12 +2,15 @@ import { Handler } from 'aws-lambda';
 import { joinTables } from '../db/utils';
 
 export const productsListHandler: Handler = async function(event) {
+  console.log('productsListHandler', event);
   const tableProduct = process.env.TABLE_NAME_PRODUCT;
   const tableStock = process.env.TABLE_NAME_STOCK;
   if (!tableProduct || !tableStock) {
     return {
       statusCode: 500,
-      body: 'TABLE_NAME_PRODUCT and TABLE_NAME_STOCK environment variables are not set',
+      body: JSON.stringify({ message: 
+        'TABLE_NAME_PRODUCT and TABLE_NAME_STOCK environment variables are not set'
+      }),
     };
   }
 
@@ -19,10 +22,10 @@ export const productsListHandler: Handler = async function(event) {
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify(products)
     };
-  } catch(err) {
+  } catch(err: any) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ message: err }),
+      body: JSON.stringify({ message: err.message }),
     };
   }
 }

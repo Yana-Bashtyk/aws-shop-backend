@@ -1,10 +1,10 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, ScanCommand, GetCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, ScanCommand, GetCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
 
 const client = new DynamoDBClient({});
-export const ddbDocClient = DynamoDBDocumentClient.from(client);
+const ddbDocClient = DynamoDBDocumentClient.from(client);
 
-export const scanTable = async (tableName: string): Promise<any[]> => {
+const scanTable = async (tableName: string): Promise<any[]> => {
   try {
     const data = await ddbDocClient.send(new ScanCommand({ TableName: tableName }));
     return data.Items || [];
@@ -14,7 +14,7 @@ export const scanTable = async (tableName: string): Promise<any[]> => {
   }
 };
 
-export const joinTables = async (table1: string, table2: string) => {
+const joinTables = async (table1: string, table2: string) => {
   const itemsFromProductTable = await scanTable(table1);
   const itemsFromStockTable = await scanTable(table2);
 
@@ -27,7 +27,7 @@ export const joinTables = async (table1: string, table2: string) => {
   return result;
 };
 
-export const getRecord = async (tableName: string, key: string, id: string) => {
+const getRecord = async (tableName: string, key: string, id: string) => {
   const params = {
     TableName: tableName,
     Key: {
@@ -43,3 +43,44 @@ export const getRecord = async (tableName: string, key: string, id: string) => {
     return null;
   }
 };
+
+interface ICreatedProduct {
+  id: string;
+  description: string;
+  price: number;
+  title: string;
+  count: number;
+};
+interface IProduct {
+  id: string;
+  description: string;
+  price: number;
+  title: string;
+};
+
+interface IStock {
+  product_id: string;
+  count: number;
+};
+
+const createProduct = async (product: IProduct, tableName: string) => {
+  try {
+    await ddbDocClient.send(new PutCommand({ TableName: tableName,
+      Item: product
+    }));
+  } catch (err) {
+    console.error(`Error creating product in table ${tableName}:`, err);
+    throw err;
+  }
+};
+
+const createProductStock = async (product: IStock, tableName: string) => {
+  try {
+    await ddbDocClient.send(new PutCommand({ TableName: tableName, Item: product}));
+  } catch (err) {
+    console.error(`Error creating product in table ${tableName}:`, err);
+    throw err;
+  }
+};
+
+export { ICreatedProduct, IProduct, IStock, scanTable, joinTables, getRecord, createProduct, createProductStock };

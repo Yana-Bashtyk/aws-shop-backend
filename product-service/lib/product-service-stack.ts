@@ -6,20 +6,34 @@ import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { Construct } from 'constructs';
 import * as path from 'path';
+import { config as dotenvConfig }  from 'dotenv';
+
+dotenvConfig();
 
 export class ProductServiceStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const table = dynamodb.Table.fromTableName(this, 'importedProductTable', 'product_model');
-    const tableStock = dynamodb.Table.fromTableName(this, 'importedStockTable', 'stock_model');
-
     const nodeJsFunctionShared = {
       runtime: lambda.Runtime.NODEJS_18_X,
       environment: {
         PRODUCT_AWS_REGION: process.env.PRODUCT_AWS_REGION!,
-        TABLE_NAME_PRODUCT: table.tableName,
-        TABLE_NAME_STOCK: tableStock.tableName
+        RDS_HOST: process.env.RDS_HOST!,
+        RDS_PORT: process.env.RDS_PORT!,
+        RDS_USER: process.env.RDS_USER!,
+        RDS_PASSWORD: process.env.RDS_PASSWORD!,
+        RDS_DATABASE: process.env.RDS_DATABASE!
+      },
+      bundling: {
+        externalModules: [
+          'better-sqlite3',
+          'mysql2',
+          'mysql',
+          'tedious',
+          'sqlite3',
+          'pg-query-stream',
+          'oracledb',
+        ],
       },
     }
 
@@ -43,13 +57,6 @@ export class ProductServiceStack extends cdk.Stack {
       functionName: 'createProduct',
       handler: 'createProductHandler'
     });
-
-    table.grantReadWriteData(getProductsList);
-    table.grantReadWriteData(getProductsById);
-    tableStock.grantReadWriteData(getProductsList);
-    tableStock.grantReadWriteData(getProductsById);
-    table.grantReadWriteData(createProduct);
-    tableStock.grantReadWriteData(createProduct);
 
     const httpApi = new apiGateway.HttpApi(this, 'ProductsHttpApi', {
       apiName: 'Products Http Api',

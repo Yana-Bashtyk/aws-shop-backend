@@ -1,22 +1,11 @@
 import { Handler } from 'aws-lambda';
-import { joinTables } from '../db/utils';
+import { getProducts } from '../db/rds_utils';
 
 export const productsListHandler: Handler = async function(event) {
   console.log('productsListHandler', event);
-  const tableProduct = process.env.TABLE_NAME_PRODUCT;
-  const tableStock = process.env.TABLE_NAME_STOCK;
-  if (!tableProduct || !tableStock) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ message: 
-        'TABLE_NAME_PRODUCT and TABLE_NAME_STOCK environment variables are not set'
-      }),
-    };
-  }
-
-  const products = await joinTables(tableProduct, tableStock);
 
   try {
+    const products = await getProducts();
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'text/plain' },

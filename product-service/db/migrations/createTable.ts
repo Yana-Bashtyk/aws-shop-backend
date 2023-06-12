@@ -4,7 +4,7 @@ export async function up(knex: Knex) {
   await knex.schema.createTable('products', (table) => {
     table.string('id').primary();
     table.string('description').notNullable();
-    table.float('price').notNullable();
+    table.double('price').notNullable();
     table.string('title').notNullable();
   });
 

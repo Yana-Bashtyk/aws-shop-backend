@@ -1,6 +1,6 @@
 import { Knex } from 'knex';
 import { config as dotenvConfig }  from 'dotenv';
-dotenvConfig();
+dotenvConfig({ path: '../.env'});
 
 const config: Knex.Config = {
   client: 'pg',

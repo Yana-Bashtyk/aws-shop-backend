@@ -1,9 +1,19 @@
 import { Handler } from 'aws-lambda';
-import { products } from '../mocks/products';
+import { getProductById } from '../db/rds_utils';
 
 export const productsIdHandler: Handler = async function(event) {
+  console.log('productsIdHandler', event);
+  const { productId } = event.pathParameters;
+
+  if (!productId) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ message: 'Product ID is required' }),
+    };
+  }
+
   try {
-    const product = products.find((el) => el.id === event.pathParameters?.productId);
+    const product = await getProductById(productId);
 
     if (!product) {
       return {
@@ -18,11 +28,11 @@ export const productsIdHandler: Handler = async function(event) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(product),
     };
-  } catch(err) {
+  } catch(err: any) {
     return {
       statusCode: 500,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: err }),
+      body: JSON.stringify({ message: err.message }),
     };
   }
 }

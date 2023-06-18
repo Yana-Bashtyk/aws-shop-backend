@@ -3,10 +3,10 @@ info:
   title: "Products Http Api"
   version: "1.0.0"
 servers:
-- url: "https://870nyoxs79.execute-api.eu-west-1.amazonaws.com/{basePath}"
-  variables:
-    basePath:
-      default: ""
+  - url: "https://870nyoxs79.execute-api.eu-west-1.amazonaws.com/{basePath}"
+    variables:
+      basePath:
+        default: ""
 paths:
   /products:
     get:
@@ -19,6 +19,40 @@ paths:
                   type: array
                   items:
                     $ref: '#/components/schemas/Product'
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProduct'
+      responses:
+        '200':
+            description: Successfuly created product
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/CreateProduct'
+        '400':
+          description: Invalid input data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Invalid parameters"
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error creating product:"
   /products/{productId}:
     get:
       responses:
@@ -49,6 +83,26 @@ x-amazon-apigateway-cors:
 x-amazon-apigateway-importexport-version: "1.0"
 components:
   schemas:
+    CreateProduct:
+      required:
+        - title
+        - price
+        - description
+        - count
+      type: object
+      properties:
+        price:
+          type: number
+          example: 23
+        description:
+          type: string
+          example: 'This is description'
+        title:
+          type: string
+          example: 'This is title'
+        count:
+          type: number
+          example: 3
     Product:
       required:
         - id

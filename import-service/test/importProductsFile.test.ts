@@ -1,8 +1,11 @@
 import { importProductsFileHandler } from '../lambda/importProductsFile';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { Context, APIGatewayProxyEvent } from 'aws-lambda';
+import { mockClient } from 'aws-sdk-client-mock';
 import { mockEvent } from './test-mocks';
 
 const mockedSignedUrl = 'https://example-bucket.s3.example.amazonaws.com/mocked-signed-url';
+const s3ClientMock = mockClient(S3Client);
 
 jest.mock('@aws-sdk/s3-request-presigner', () => {
   const originalModule = jest.requireActual('@aws-sdk/s3-request-presigner');
@@ -18,9 +21,12 @@ describe('importProductsFile handler', () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
+    s3ClientMock.restore();
   });
 
   it('should return a signed URL', async () => {
+    s3ClientMock.on(PutObjectCommand, { Bucket: 'example-bucket' }).resolves({});
+
     const event: APIGatewayProxyEvent = {
       ...mockEvent,
       queryStringParameters: {
@@ -29,7 +35,7 @@ describe('importProductsFile handler', () => {
     };
 
     const response = await importProductsFileHandler(event, {} as Context, () => {});
-    console.log(response.body);
+
     expect(response.statusCode).toEqual(200);
     expect(JSON.parse(response.body).message).toEqual(mockedSignedUrl);
   });

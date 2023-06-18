@@ -1,23 +1,19 @@
 import { Handler } from 'aws-lambda';
-import { getRecord } from '../db/utils';
+import { getProductById } from '../db/rds_utils';
 
 export const productsIdHandler: Handler = async function(event) {
   console.log('productsIdHandler', event);
-  const tableProduct = process.env.TABLE_NAME_PRODUCT;
-  const tableStock = process.env.TABLE_NAME_STOCK;
-  if (!tableProduct || !tableStock) {
+  const { productId } = event.pathParameters;
+
+  if (!productId) {
     return {
-      statusCode: 500,
-      body: JSON.stringify({ message: 
-        'TABLE_NAME_PRODUCT and TABLE_NAME_STOCK environment variables are not set'})
+      statusCode: 400,
+      body: JSON.stringify({ message: 'Product ID is required' }),
     };
   }
 
   try {
-    const productItem = await getRecord(tableProduct, 'id', event.pathParameters?.productId);
-    const stockItem = await getRecord(tableStock, 'product_id', event.pathParameters?.productId);
-    const { product_id: _, ...stockItemWithoutId } = stockItem as Record<string, any>;
-    const product = { ...productItem, ...stockItemWithoutId };
+    const product = await getProductById(productId);
 
     if (!product) {
       return {

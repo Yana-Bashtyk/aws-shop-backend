@@ -13,6 +13,12 @@ The `cdk.json` file tells the CDK Toolkit how to execute your app.
 * `cdk diff`        compare deployed stack with current state
 * `cdk synth`       emits the synthesized CloudFormation template
 
+### DB commands
+
+* `npm run rds:create`  create tables
+* `npm run rds:drop`    drop created tables
+* `npm run rds:fill`    seed tables with json data from `./data/`
+
 ## Deplyment links
 
 FE app repository: [https://github.com/Yana-Bashtyk/nodejs-aws-shop-react/](https://github.com/Yana-Bashtyk/nodejs-aws-shop-react/)

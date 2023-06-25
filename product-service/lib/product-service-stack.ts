@@ -98,7 +98,28 @@ export class ProductServiceStack extends cdk.Stack {
       topicName: 'createProductTopic',
     });
 
-    createProductTopic.addSubscription(new subscriptions.EmailSubscription(process.env.EMAIL_ADDRESS!));
+    const mainFilterPolicy = {
+      count: sns.SubscriptionFilter.numericFilter({
+        lessThanOrEqualTo: 10,
+      }),
+    };
+
+    createProductTopic.addSubscription(
+      new subscriptions.EmailSubscription(process.env.EMAIL_ADDRESS!, {
+        filterPolicy: mainFilterPolicy
+      }));
+
+    const secondFilterPolicy = {
+      count: sns.SubscriptionFilter.numericFilter({
+        greaterThan: 10,
+      }),
+    };
+
+    createProductTopic.addSubscription(
+      new subscriptions.EmailSubscription(process.env.ADDITIONAL_EMAIL_ADDRESS!, {
+        filterPolicy: secondFilterPolicy
+      })
+    );
 
     const catalogBatchProcess = new NodejsFunction(this, 'catalogBatchProcess', {
       ...nodeJsFunctionShared,

@@ -12,11 +12,18 @@ export const catalogBatchProcessHandler: Handler = async (event) => {
       const newProductResponse = await createProductHandler(record, {} as Context, () => {});
 
       console.log('newProductData', newProductResponse);
+      const parsedMessage = JSON.parse(newProductResponse.body).message;
 
       const snsParams = {
         Subject: 'Product Created',
-        Message: `A new product has been created: ${newProductResponse.body}`,
+        Message: `A new product has been created: ${JSON.stringify(parsedMessage)}`,
         TopicArn: process.env.CREATE_PRODUCT_TOPIC_ARN,
+        MessageAttributes: {
+          count: {
+            DataType: 'Number',
+            StringValue: parsedMessage.count,
+          },
+        },
       };
       if(newProductResponse.statusCode === 200) {
         await sns.send(new PublishCommand(snsParams));

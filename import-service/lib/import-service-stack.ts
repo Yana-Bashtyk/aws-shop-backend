@@ -8,6 +8,7 @@ import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as s3_notifications from 'aws-cdk-lib/aws-s3-notifications';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as logs from 'aws-cdk-lib/aws-logs';
+import * as sqs from 'aws-cdk-lib/aws-sqs';
 import * as path from 'path';
 
 import { config as dotenvConfig }  from 'dotenv';
@@ -40,17 +41,22 @@ export class ImportServiceStack extends cdk.Stack {
       role: lambdaRole,
     });
 
+    const queue = sqs.Queue.fromQueueArn(this, 'catalogItemsQueue', `arn:aws:sqs:${process.env.AWS_REGION}:${process.env.AWS_ACCOUNT_ID}:catalogItemsQueue`);
+
     const importFileParser = new NodejsFunction(this, 'importFileParser', {
       runtime: lambda.Runtime.NODEJS_18_X,
       environment: {
         PRODUCT_AWS_REGION: process.env.AWS_REGION!,
-        IMPORT_S3_BUCKET_NAME: process.env.IMPORT_S3_BUCKET_NAME!
+        IMPORT_S3_BUCKET_NAME: process.env.IMPORT_S3_BUCKET_NAME!,
+        QUEUE_URL: queue.queueUrl,
       },
       entry: path.join(__dirname,'../lambda/importFileParser.ts'),
       functionName: 'importFileParser',
       handler: 'importFileParserHandler',
       role: lambdaRole,
     });
+
+    queue.grantSendMessages(importFileParser);
 
     bucket.addEventNotification(s3.EventType.OBJECT_CREATED,
       new s3_notifications.LambdaDestination(importFileParser),
@@ -59,7 +65,7 @@ export class ImportServiceStack extends cdk.Stack {
 
     new logs.LogGroup(this, 'importFileParserLogGroup', {
       logGroupName: `/aws/lambda/${importFileParser.functionName}`,
-      removalPolicy: cdk.RemovalPolicy.DESTROY, // Optional: Remove the log group when the stack is deleted
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
     const httpApi = new apiGateway.HttpApi(this, 'ImportServiceHttpApi', {

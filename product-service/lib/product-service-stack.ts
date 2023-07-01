@@ -1,10 +1,14 @@
 import * as cdk from 'aws-cdk-lib';
-import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as apiGateway from '@aws-cdk/aws-apigatewayv2-alpha';
 import { HttpLambdaIntegration } from '@aws-cdk/aws-apigatewayv2-integrations-alpha';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { Construct } from 'constructs';
+import * as sqs from 'aws-cdk-lib/aws-sqs';
+import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
+import * as sns from 'aws-cdk-lib/aws-sns';
+import * as subscriptions from 'aws-cdk-lib/aws-sns-subscriptions';
+
 import * as path from 'path';
 import { config as dotenvConfig }  from 'dotenv';
 
@@ -89,5 +93,55 @@ export class ProductServiceStack extends cdk.Stack {
       methods: [apiGateway.HttpMethod.POST],
       integration: createProductIntegration,
     });
+
+    const createProductTopic = new sns.Topic(this, 'createProductTopic', {
+      topicName: 'createProductTopic',
+    });
+
+    const mainFilterPolicy = {
+      count: sns.SubscriptionFilter.numericFilter({
+        lessThanOrEqualTo: 10,
+      }),
+    };
+
+    createProductTopic.addSubscription(
+      new subscriptions.EmailSubscription(process.env.EMAIL_ADDRESS!, {
+        filterPolicy: mainFilterPolicy
+      }));
+
+    const secondFilterPolicy = {
+      count: sns.SubscriptionFilter.numericFilter({
+        greaterThan: 10,
+      }),
+    };
+
+    createProductTopic.addSubscription(
+      new subscriptions.EmailSubscription(process.env.ADDITIONAL_EMAIL_ADDRESS!, {
+        filterPolicy: secondFilterPolicy
+      })
+    );
+
+    const catalogBatchProcess = new NodejsFunction(this, 'catalogBatchProcess', {
+      ...nodeJsFunctionShared,
+      entry: path.join(__dirname,'../lambda/catalogBatchProcess.ts'),
+      functionName: 'catalogBatchProcess',
+      handler: 'catalogBatchProcessHandler',
+      timeout: cdk.Duration.seconds(30),
+      environment: {
+        ...nodeJsFunctionShared.environment,
+        CREATE_PRODUCT_TOPIC_ARN: createProductTopic.topicArn
+      }
+    });
+
+    createProductTopic.grantPublish(catalogBatchProcess);
+
+    const catalogItemsQueue = new sqs.Queue(this, 'catalogItemsQueue', {
+      queueName: 'catalogItemsQueue',
+      visibilityTimeout: cdk.Duration.seconds(30)
+    });
+
+    catalogBatchProcess.addEventSource(new SqsEventSource(catalogItemsQueue, {
+      batchSize: 5,
+    }));
   }
 }

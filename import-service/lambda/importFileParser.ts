@@ -1,8 +1,28 @@
 import { Handler, S3Event} from 'aws-lambda';
 import { GetObjectCommand, CopyObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
-import { s3 } from './utils';
+import { s3, sqsClient } from './utils';
 import csvParser from 'csv-parser';
 import { Readable } from 'stream';
+import { SendMessageCommand } from '@aws-sdk/client-sqs';
+import { ICsvRecord } from './types';
+
+function processCsvRecords(stream: Readable, onRecordHandler: (record: ICsvRecord) => Promise<void>) {
+  return new Promise<void>((resolve, reject) => {
+    stream
+      .pipe(csvParser())
+      .on('data', async (row: ICsvRecord) => {
+        stream.pause();
+        try {
+          await onRecordHandler(row);
+        } catch (error) {
+          reject(error);
+        }
+        stream.resume();
+      })
+      .on('end', resolve)
+      .on('error', reject);
+  });
+}
 
 export const importFileParserHandler: Handler = async (event: S3Event) => {
   try {
@@ -20,25 +40,22 @@ export const importFileParserHandler: Handler = async (event: S3Event) => {
       }
 
       const readableStream = response.Body;
+      await processCsvRecords(readableStream, async (row: ICsvRecord) => {
+        console.log('CSV record:', row);
 
-      const parser = readableStream.pipe(csvParser());
-      parser.on('data', (row) => {
-        console.log('Parsed row data:', row);
-      });
+        const sendMessageCommand = new SendMessageCommand({
+          QueueUrl: process.env.QUEUE_URL,
+          MessageBody: JSON.stringify(row),
+        });
 
-        const processingPromise = new Promise<void>((resolve, reject) => {
-          parser.on('end', async () => {
-            console.log('Finished parsing the CSV file.');
+        try {
+          await sqsClient.send(sendMessageCommand);
+          console.log('Message sent to SQS:', row);
+        } catch (error) {
+          console.error('Error sending message to SQS:', error);
+        }
+      })
 
-            resolve();
-          });
-          parser.on('error', (error) => {
-            console.error('Error by parsing the CSV file:', error);
-            reject(error);
-          });
-        })
-
-        await processingPromise;
         const newObjectKey = objectKey.replace('uploaded/', 'parsed/');
         const copyCommand = new CopyObjectCommand({
           Bucket: bucketName,

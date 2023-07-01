@@ -1,4 +1,4 @@
-import { Context, APIGatewayProxyEvent, Handler } from 'aws-lambda';
+import { Context, APIGatewayProxyEvent } from 'aws-lambda';
 
 const event: APIGatewayProxyEvent = {
   body: null,

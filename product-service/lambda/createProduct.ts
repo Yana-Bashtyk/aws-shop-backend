@@ -10,7 +10,7 @@ export const createProductHandler: Handler = async (event) => {
     if(event.body) {
       const body: ICreatedProduct = JSON.parse(event.body);
       const { description, title, price, count } = body;
-      if (!title || !description || typeof price !== 'number' || isNaN(Number(price)) || typeof count !== 'number' || isNaN(Number(count))) {
+      if (!title || !description || Number(price) < 0 || isNaN(Number(price)) || Number(count) < 0 || isNaN(Number(count))) {
         return {
           statusCode: 400,
           headers: { 'Content-Type': 'application/json' },

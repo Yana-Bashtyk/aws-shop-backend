@@ -12,6 +12,8 @@
     "cdk:deploy": "cdk deploy --profile yanaadmin"
   },
   "devDependencies": {
+    "@aws-cdk/aws-apigatewayv2-alpha": "^2.86.0-alpha.0",
+    "@aws-cdk/aws-apigatewayv2-integrations-alpha": "^2.86.0-alpha.0",
     "@types/aws-lambda": "^8.10.119",
     "@types/jest": "^29.5.1",
     "@types/node": "20.1.7",

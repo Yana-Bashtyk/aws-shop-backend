@@ -8,6 +8,8 @@ import * as sqs from 'aws-cdk-lib/aws-sqs';
 import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
 import * as sns from 'aws-cdk-lib/aws-sns';
 import * as subscriptions from 'aws-cdk-lib/aws-sns-subscriptions';
+import * as cognito from 'aws-cdk-lib/aws-cognito';
+import { HttpUserPoolAuthorizer } from '@aws-cdk/aws-apigatewayv2-authorizers-alpha';
 
 import * as path from 'path';
 import { config as dotenvConfig }  from 'dotenv';
@@ -17,6 +19,12 @@ dotenvConfig();
 export class ProductServiceStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
+
+    const userPool = cognito.UserPool.fromUserPoolId(this, 'RsAppPool', process.env.USER_POOL_ID!);
+    const userPoolClient = cognito.UserPoolClient.fromUserPoolClientId(this, 'nodejs-aws-shop-react', process.env.USER_POOL_CLIENT_ID!);
+    const cognitoAuthorizer = new HttpUserPoolAuthorizer('CognitoAuthorizer', userPool, {
+      userPoolClients: [userPoolClient]
+    });
 
     const nodeJsFunctionShared = {
       runtime: lambda.Runtime.NODEJS_18_X,
@@ -45,7 +53,7 @@ export class ProductServiceStack extends cdk.Stack {
       ...nodeJsFunctionShared,
       entry: path.join(__dirname,'../lambda/getProductsList.ts'),
       functionName: 'getProductsList',
-      handler: 'productsListHandler'
+      handler: 'productsListHandler',
     });
 
     const getProductsById = new NodejsFunction(this, 'getProductsById', {
@@ -76,6 +84,7 @@ export class ProductServiceStack extends cdk.Stack {
       path: '/products',
       methods: [apiGateway.HttpMethod.GET],
       integration: getProductsListIntegration,
+      authorizer: cognitoAuthorizer,
     });
 
     const getProductsByIdIntegration = new HttpLambdaIntegration('productsByIdIntegration', getProductsById);

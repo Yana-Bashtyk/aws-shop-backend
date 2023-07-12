@@ -84,7 +84,7 @@ export class ProductServiceStack extends cdk.Stack {
       path: '/products',
       methods: [apiGateway.HttpMethod.GET],
       integration: getProductsListIntegration,
-      authorizer: cognitoAuthorizer,
+      // authorizer: cognitoAuthorizer,
     });
 
     const getProductsByIdIntegration = new HttpLambdaIntegration('productsByIdIntegration', getProductsById);

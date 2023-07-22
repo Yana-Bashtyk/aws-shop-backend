@@ -8,7 +8,7 @@ export const productsListHandler: Handler = async function(event) {
     const products = await getProducts();
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'text/plain' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(products)
     };
   } catch(err: any) {

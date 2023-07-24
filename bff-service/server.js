@@ -2,6 +2,7 @@ const express = require('express');
 const dotenv = require('dotenv');
 const axios = require('axios').default;
 const cors = require("cors");
+const NodeCache = require('node-cache');
 dotenv.config();
 
 const app = express();
@@ -14,6 +15,10 @@ const serviceMap = {
   products: process.env.products,
 };
 
+const cacheDuration = 120;// 2 min
+const cache = new NodeCache(); 
+const isGetProductsListRequest = (method, originalUrl) => method === 'GET' && originalUrl.includes('/products');
+
 app.all('/:recipientServiceName*', async (req, res) => {
   console.log('original url', req.originalUrl);
   console.log('original method', req.method);
@@ -25,6 +30,17 @@ app.all('/:recipientServiceName*', async (req, res) => {
   if (!recipientURL) {
     res.status(502).send('Cannot process request');
     return;
+  }
+
+  const shouldBeChached = isGetProductsListRequest(req.method, req.originalUrl);
+  if (shouldBeChached) {
+    const cacheKey = `${recipientServiceName}-${req.method}`;
+    const cachedResponse = cache.get(cacheKey);
+
+    if (cachedResponse) {
+      res.status(200).send(cachedResponse);
+      return;
+    }
   }
 
   const targetURL = `${recipientURL}${req.originalUrl}`;
@@ -48,6 +64,11 @@ app.all('/:recipientServiceName*', async (req, res) => {
 
   try {
     const response = await axios(axiosConfig);
+    if (shouldBeChached) {
+      const cacheKey = `${recipientServiceName}-${req.method}`;
+      cache.set(cacheKey, response.data, cacheDuration);
+    }
+
     console.log('response', response.data);
     res.status(response.status).send(response.data);
   } catch (error) {

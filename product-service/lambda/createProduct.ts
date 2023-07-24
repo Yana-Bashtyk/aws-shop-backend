@@ -3,13 +3,15 @@ import { createProductTransaction } from '../db/rds_utils';
 import { IProduct, ICreatedProduct, IStock } from '../db/types';
 import { v4 as uuidv4 } from 'uuid';
 
+const imageDefault = 'https://images.unsplash.com/photo-1578328819058-b69f3a3b0f6b';
+
 export const createProductHandler: Handler = async (event) => {
   console.log('createProductHandler', event);
 
   try {
     if(event.body) {
       const body: ICreatedProduct = JSON.parse(event.body);
-      const { description, title, price, count } = body;
+      const { description, title, price, image = imageDefault, count } = body;
       if (!title || !description || Number(price) < 0 || isNaN(Number(price)) || Number(count) < 0 || isNaN(Number(count))) {
         return {
           statusCode: 400,
@@ -21,7 +23,8 @@ export const createProductHandler: Handler = async (event) => {
       }
 
       const id = uuidv4();
-      const product: IProduct = { description, id, title, price };
+
+      const product: IProduct = { description, id, title, price, image };
       const stock: IStock = { product_id: id, count };
 
       await createProductTransaction(product, stock);

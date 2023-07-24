@@ -1,10 +1,11 @@
 const express = require('express');
 const dotenv = require('dotenv');
-const axios = require('axios');
-
+const axios = require('axios').default;
+const cors = require("cors");
 dotenv.config();
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 const port = process.env.PORT || 3000;
 
@@ -27,33 +28,29 @@ app.all('/:recipientServiceName*', async (req, res) => {
   }
 
   const targetURL = `${recipientURL}${req.originalUrl}`;
-  console.log('targetURL', targetURL);
   const forwardedHeaders = Object.fromEntries(
     Object.entries(req.headers).filter(([headerName]) => {
       return !['host', 'connection'].includes(headerName.toLowerCase());
     })
   );
+  const auth = forwardedHeaders.authorization;
+  const headers = {'Content-Type': 'application/json'};
+  if (auth) {
+    headers.authorization = auth
+  }
 
-  if (['POST', 'PUT'].includes(req.method) && !forwardedHeaders['Content-Type']) {
-    forwardedHeaders['Content-Type'] = 'application/json';
-  };
-  console.log('forwardedHeaders', forwardedHeaders);
   const axiosConfig = {
     method: req.method,
     url: targetURL,
     ...Object.keys(req.body || {}).length > 0 && {data: req.body},
-    headers: forwardedHeaders,
-    timeout: 100000,
+    headers,
   }
-
-  console.log('axiosConfig', axiosConfig);
 
   try {
     const response = await axios(axiosConfig);
-    // console.log('response', response.data);
+    console.log('response', response.data);
     res.status(response.status).send(response.data);
   } catch (error) {
-    console.log('error', error);
     const status = error.response?.status || 500;
     const message = error.response?.data || { error: 'Internal server error' };
     res.status(status).send(message);

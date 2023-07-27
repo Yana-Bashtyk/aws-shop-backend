@@ -6,7 +6,7 @@ const knex = Knex(knexConfig);
 
 const getProducts = async () => {
   const products = await knex('products')
-    .select('products.id', 'products.description', 'products.price', 'products.title', 'stocks.count')
+    .select('products.id', 'products.description', 'products.price', 'products.title', 'products.image', 'stocks.count')
     .innerJoin('stocks', 'products.id', 'stocks.product_id');
 
   return products;
@@ -14,7 +14,7 @@ const getProducts = async () => {
 
 const getProductById = async (id: string) => {
   const product = await knex('products')
-    .select('products.id', 'products.description', 'products.price', 'products.title', 'stocks.count')
+    .select('products.id', 'products.description', 'products.price', 'products.title', 'products.image', 'stocks.count')
     .innerJoin('stocks', 'products.id', 'stocks.product_id')
     .where('products.id', id)
     .first();

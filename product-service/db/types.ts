@@ -3,12 +3,14 @@ interface ICreatedProduct {
   price: number;
   title: string;
   count: number;
+  image?: string;
 };
 interface IProduct {
   id: string;
   description: string;
   price: number;
   title: string;
+  image?: string;
 };
 
 interface IStock {

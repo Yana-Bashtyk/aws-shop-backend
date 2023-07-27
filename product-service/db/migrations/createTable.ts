@@ -6,6 +6,7 @@ export async function up(knex: Knex) {
     table.string('description').notNullable();
     table.double('price').notNullable();
     table.string('title').notNullable();
+    table.string('image');
   });
 
   await knex.schema.createTable('stocks', (table) => {

@@ -11,8 +11,8 @@
     "cdk": "cdk",
     "cdk:deploy": "npx cdk deploy --profile yanaadmin",
     "cdk:destroy": "npx cdk destroy --profile yanaadmin",
-    "rds:create": "npx ts-node ./node_modules/.bin/knex migrate:latest --knexfile ./db/knexfile.ts",
-    "rds:drop": "npx ts-node ./node_modules/.bin/knex migrate:rollback --knexfile ./db/knexfile.ts",
+    "rds:create": "npx ts-node  --transpile-only ./node_modules/.bin/knex migrate:latest --knexfile ./db/knexfile.ts --cwd ./",
+    "rds:drop": "npx ts-node --transpile-only ./node_modules/.bin/knex migrate:rollback --knexfile ./db/knexfile.ts --cwd ./",
     "rds:fill": "npx ts-node ./node_modules/.bin/knex seed:run --knexfile ./db/knexfile.ts"
   },
   "devDependencies": {
